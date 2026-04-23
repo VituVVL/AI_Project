@@ -7,11 +7,27 @@ class PopOutGame:
         self.board = [[self.EMPTY for _ in range(self.COLS)] for _ in range(self.ROWS)]
         self.current_player = 'X'
 
+        self.last_player = None
+        self.last_move_type = None
+
+        self.state_history = {}
+        self._record_state() #Grava estado inicial do tabuleiro
+    
+    def _record_state(self):
+        state_tuple = tuple(tuple(row) for row in self.board)
+        self.state_history[state_tuple] = self.state_history.get(state_tuple, 0) + 1
+
     def clone(self):
         """Cria uma cópia do estado do jogo (útil para algoritmos de pesquisa depois)."""
         new_game = PopOutGame()
         new_game.board = [row[:] for row in self.board]
         new_game.current_player = self.current_player
+
+        #Copiar os novos atributos
+        new_game.last_player = self.last_player
+        new_game.last_move_type = self.last_move_type
+        new_game.state_history = self.state_history.copy()
+
         return new_game
 
     def switch_player(self):
@@ -59,16 +75,19 @@ class PopOutGame:
         return True
 
     def apply_move(self, move_type, col):
-        """
-        Aplica uma jogada.
-        move_type: 'drop' ou 'pop'
-        col: índice da coluna (0 a 6)
-        """
+        """Aplica uma jogada (drop ou pop) e regista o histórico."""
+        success = False
         if move_type == 'drop':
-            return self.drop_piece(col)
+            success = self.drop_piece(col)
         elif move_type == 'pop':
-            return self.pop_piece(col)
-        return False
+            success = self.pop_piece(col)
+        
+        if success:
+            self.last_player = self.current_player
+            self.last_move_type = move_type
+            self._record_state()
+
+        return success
 
     def get_legal_moves(self):
         """
@@ -118,30 +137,33 @@ class PopOutGame:
         return False
 
     def get_game_result(self):
-        """
-        Retorna:
-        'X' se X venceu
-        'O' se O venceu
-        'DRAW' se empate
-        None se o jogo continua
-
-        Observação:
-        após um pop, pode acontecer de ambos criarem 4 em linha.
-        Aqui tratei isso como empate.
-        """
+        """Verifica o estado do jogo e aplica as regras do PopOut."""
         x_wins = self.check_winner_for('X')
         o_wins = self.check_winner_for('O')
 
+        # Se um pop cria 4 em linha para ambos, o jogador que fez o pop ganha e o outro é ignorado.
         if x_wins and o_wins:
-            return 'DRAW'
+            if self.last_move_type == 'pop':
+                return self.last_player
+            else:
+                return 'DRAW'
+            
         elif x_wins:
             return 'X'
         elif o_wins:
             return 'O'
-        elif self.board_full() and len(self.get_legal_moves()) == 0:
+        
+        # Se o mesmo estado se repete 3 vezes, o jogo é declarado empate.
+        current_state = tuple(tuple(row) for row in self.board)
+        if self.state_history.get(current_state, 0) >= 3:
             return 'DRAW'
-        else:
-            return None
+
+        #Verifica se não há mais movimentos possíveis (empate por bloqueio)
+        if self.board_full() and len(self.get_legal_moves()) == 0:
+            return 'DRAW'
+        
+
+        return None
 
     def print_instructions(self):
         print("Game Interface")
