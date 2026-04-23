@@ -40,7 +40,7 @@ class PopOutGame:
             print(''.join(row))
         print()
         #print(" 1234567")
-        print()
+        #print()
 
     def is_column_full(self, col):
         return self.board[0][col] != self.EMPTY
@@ -196,9 +196,9 @@ class PopOutGame:
                 print("It's a draw!")
                 break
 
-            print(f"It is now {self.current_player}'s turn.")
+            print(f"It is now {self.current_player}'s turn. Enter move (drop/pop + column): ")
 
-            #Regra do tabuleiro cheio: Se o tabuleiro estiver cheio o jogador pode decidir terminar em empate ou dar pop
+            # Regra do tabuleiro cheio
             if self.board_full():
                 print("O tabuleiro está cheio! Podes fazer um 'pop' ou declarar empate.")
                 draw_choice = input("Queres terminar com empate? (sim/nao): ").strip().lower()
@@ -206,41 +206,43 @@ class PopOutGame:
                     print("O jogo terminou em empate por decisão do jogador!")
                     break
 
+            # Loop interno para insistir até o jogador fazer uma jogada válida
+            while True:
+                #move_input = input("> ").strip().lower()
+                move_input = input(f"{self.current_player}> ").strip().lower()
+                parts = move_input.split()
 
-            #print("Make a move by choosing the type of move (drop or pop) and the column.")
-            #print("Example: drop 4")
-            move_input = input("> ").strip().lower()
+                if len(parts) != 2:
+                    print("Invalid format. Use: drop 4  or  pop 2")
+                    continue
 
-            parts = move_input.split()
+                move_type, col_str = parts
 
-            if len(parts) != 2:
-                print("Invalid format. Use: drop 4  or  pop 2")
-                continue
+                if move_type not in ('drop', 'pop'):
+                    print("Invalid move type. Use 'drop' or 'pop'.")
+                    continue
 
-            move_type, col_str = parts
+                if not col_str.isdigit():
+                    print("Column must be a number from 1 to 7.")
+                    continue
 
-            if move_type not in ('drop', 'pop'):
-                print("Invalid move type. Use 'drop' or 'pop'.")
-                continue
+                col = int(col_str) - 1
 
-            if not col_str.isdigit():
-                print("Column must be a number from 1 to 7.")
-                continue
+                if not (0 <= col < self.COLS):
+                    print("Column must be between 1 and 7.")
+                    continue
 
-            col = int(col_str) - 1
+                success = self.apply_move(move_type, col)
 
-            if not (0 <= col < self.COLS):
-                print("Column must be between 1 and 7.")
-                continue
+                if not success:
+                    if move_type == 'drop':
+                        print("Invalid drop. That column is full.")
+                    else:
+                        print("Invalid pop. You can only pop your own bottom piece.")
+                    continue
 
-            success = self.apply_move(move_type, col)
-
-            if not success:
-                if move_type == 'drop':
-                    print("Invalid drop. That column is full.")
-                else:
-                    print("Invalid pop. You can only pop your own bottom piece.")
-                continue
+                # Sai do loop interno quando a jogada é válida
+                break
 
             self.switch_player()
 
