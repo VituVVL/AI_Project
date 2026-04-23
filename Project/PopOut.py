@@ -2,6 +2,7 @@ class PopOutGame:
     ROWS = 6
     COLS = 7
     EMPTY = '-'
+    #Verificar se o git funcionou!!
 
     def __init__(self):
         self.board = [[self.EMPTY for _ in range(self.COLS)] for _ in range(self.ROWS)]
@@ -196,6 +197,16 @@ class PopOutGame:
                 break
 
             print(f"It is now {self.current_player}'s turn.")
+
+            #Regra do tabuleiro cheio: Se o tabuleiro estiver cheio o jogador pode decidir terminar em empate ou dar pop
+            if self.board_full():
+                print("O tabuleiro está cheio! Podes fazer um 'pop' ou declarar empate.")
+                draw_choice = input("Queres terminar com empate? (sim/nao): ").strip().lower()
+                if draw_choice in ['sim', 's']:
+                    print("O jogo terminou em empate por decisão do jogador!")
+                    break
+
+
             #print("Make a move by choosing the type of move (drop or pop) and the column.")
             #print("Example: drop 4")
             move_input = input("> ").strip().lower()
