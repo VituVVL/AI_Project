@@ -1,9 +1,12 @@
+import MCTS 
+
 class PopOutGame:
     ROWS = 6
     COLS = 7
     EMPTY = '-'
     #Verificar se o git funcionou!!
 
+    #Cria o tabuleiro vazio
     def __init__(self):
         self.board = [[self.EMPTY for _ in range(self.COLS)] for _ in range(self.ROWS)]
         self.current_player = 'X'
@@ -11,13 +14,16 @@ class PopOutGame:
         self.last_player = None
         self.last_move_type = None
 
+        #Variavel que nos permite cumprir se um estado se repetir 3 vezes, é empate
         self.state_history = {}
         self._record_state() #Grava estado inicial do tabuleiro
     
+    #Função para guardar os estados do tabuleiro
     def _record_state(self):
         state_tuple = tuple(tuple(row) for row in self.board)
         self.state_history[state_tuple] = self.state_history.get(state_tuple, 0) + 1
 
+    #Função que cria uma copia do tabuleiro para se puder usar para os testes da IA
     def clone(self):
         """Cria uma cópia do estado do jogo (útil para algoritmos de pesquisa depois)."""
         new_game = PopOutGame()
@@ -31,26 +37,30 @@ class PopOutGame:
 
         return new_game
 
+    #Função de troca de jogadores
     def switch_player(self):
         self.current_player = 'O' if self.current_player == 'X' else 'X'
 
+    #Função para imprimir o tabuleiro
     def print_board(self):
         print()
         for row in self.board:
             print(''.join(row))
         print()
-        #print(" 1234567")
-        #print()
 
+    #Verifica se coluna esta cheia
     def is_column_full(self, col):
         return self.board[0][col] != self.EMPTY
 
+    #Verificar se o drop esta dentro dos parametros
     def is_valid_drop(self, col):
         return 0 <= col < self.COLS and not self.is_column_full(col)
 
+    #Verificar se o pop esta dentro dos parametros
     def is_valid_pop(self, col):
         return 0 <= col < self.COLS and self.board[self.ROWS - 1][col] == self.current_player
 
+    
     def drop_piece(self, col):
         """Coloca a peça do jogador atual na posição mais baixa disponível da coluna."""
         if not self.is_valid_drop(col):
@@ -94,7 +104,6 @@ class PopOutGame:
         """
         Retorna lista de jogadas possíveis no formato:
         [('drop', col), ('pop', col), ...]
-        Isso será muito útil para IA depois.
         """
         moves = []
 
@@ -179,10 +188,27 @@ class PopOutGame:
         print("  pop 2")
         print()
 
+    def print_menu_inicial(self):
+        
+        print("PopOut")
+        print("1- USER vs USER")
+        print("2- USER vs IA") #USER vs IA(MonteCarlo)
+        while(True):
+            op = input("> ").strip()
+            if(op=="1" or op=="2"):
+                return op
+
+
+
     def play(self):
+        modo_jogo = self.print_menu_inicial()
+
         self.print_instructions()
 
+        ia = MCTS.MCTS(ai_player = "O", iterations = 1000)
+
         while True:
+            
             self.print_board()
 
             result = self.get_game_result()
@@ -208,41 +234,50 @@ class PopOutGame:
 
             # Loop interno para insistir até o jogador fazer uma jogada válida
             while True:
-                #move_input = input("> ").strip().lower()
-                move_input = input(f"{self.current_player}> ").strip().lower()
-                parts = move_input.split()
+                #Se for o X é o Humano
+                if((self.current_player == "X" and modo_jogo == "2") or (modo_jogo == "1")):
+                    move_input = input(f"{self.current_player}> ").strip().lower()
+                    parts = move_input.split()
+                
 
-                if len(parts) != 2:
-                    print("Invalid format. Use: drop 4  or  pop 2")
-                    continue
+                    if len(parts) != 2:
+                        print("Invalid format. Use: drop 4  or  pop 2")
+                        continue
 
-                move_type, col_str = parts
+                    move_type, col_str = parts
 
-                if move_type not in ('drop', 'pop'):
-                    print("Invalid move type. Use 'drop' or 'pop'.")
-                    continue
+                    if move_type not in ('drop', 'pop'):
+                        print("Invalid move type. Use 'drop' or 'pop'.")
+                        continue
 
-                if not col_str.isdigit():
-                    print("Column must be a number from 1 to 7.")
-                    continue
+                    if not col_str.isdigit():
+                        print("Column must be a number from 1 to 7.")
+                        continue
 
-                col = int(col_str) - 1
+                    col = int(col_str) - 1
 
-                if not (0 <= col < self.COLS):
-                    print("Column must be between 1 and 7.")
-                    continue
+                    if not (0 <= col < self.COLS):
+                        print("Column must be between 1 and 7.")
+                        continue
 
-                success = self.apply_move(move_type, col)
+                    success = self.apply_move(move_type, col)
 
-                if not success:
-                    if move_type == 'drop':
-                        print("Invalid drop. That column is full.")
-                    else:
-                        print("Invalid pop. You can only pop your own bottom piece.")
-                    continue
+                    if not success:
+                        if move_type == 'drop':
+                            print("Invalid drop. That column is full.")
+                        else:
+                            print("Invalid pop. You can only pop your own bottom piece.")
+                        continue
 
-                # Sai do loop interno quando a jogada é válida
-                break
+                    # Sai do loop interno quando a jogada é válida
+                    break
+                else:
+                    jogada_ia = ia.search(self)
+                    print(f"A IA jogou {jogada_ia[0]} na coluna {jogada_ia[1]+1}")
+                    self.apply_move(jogada_ia[0], jogada_ia[1])
+                    #jogada_ia[0] = 'drop' ou 'pop'
+                    #jogada_ia[1] = nr da coluna
+                    break
 
             self.switch_player()
 
