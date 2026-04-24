@@ -39,7 +39,7 @@ class Node:
     
     def update(self, result, ai_player):
         #Atualiza estatísticas após uma simulação
-        self.visited +=1
+        self.visits +=1
 
         if result == ai_player:
             self.wins += 1
@@ -88,5 +88,10 @@ class MCTS:
             #No fim da simulação vemos que ganhou
             result = state.get_game_result()
 
-            #por acabar
-            
+            while node is not None:
+                node.update(result, self.ai_player)
+                node = node.parent
+        
+        #A jogada que escolhemos é do filho que foi visitado mais vezes
+        best_child = max(root.children, key=lambda c: c.visits)
+        return best_child.move
