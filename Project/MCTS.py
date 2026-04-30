@@ -11,6 +11,12 @@ class Node:
         self.children = []      #lista de nós filhos já expandidos
         self.wins = 0           #numero de vitorias a partir de este nó
         self.visits = 0         #numero de vezes que este no foi visitado
+        self.untried_moves = state.get_legal_moves()
+
+        if parent is not None:
+            self.player_who_moved = parent.state.current_player
+        else:
+            self.player_who_moved = None
 
         #Guardamos as jogadas possiveis que ainda nao transformamos em filhos
         self.untried_moves = state.get_legal_moves()
@@ -37,18 +43,18 @@ class Node:
         self.children.append(child_node)
         return child_node
     
-    def update(self, result, ai_player):
+    def update(self, result):
         #Atualiza estatísticas após uma simulação
         self.visits +=1
 
-        if result == ai_player:
+        if result == self.player_who_moved:
             self.wins += 1
         elif result == 'DRAW':
             #Um empate é melhor do que derrota logo adicionamos 0.5
             self.wins += 0.5
 
 class MCTS:
-    def __init__(self, ai_player, iterations=1000):
+    def __init__(self, ai_player, iterations=10000):
         self.ai_player = ai_player      #Define se a IA está a jogar com 'X' ou 'O'
         self.iterations = iterations    #Quantos "jogos à sorte" vamos simular por jogada
 
@@ -67,12 +73,14 @@ class MCTS:
             while len(node.untried_moves) == 0 and len(node.children) > 0:
                 node = max(node.children, key=lambda c: c.uct_value())
                 state.apply_move(node.move[0], node.move[1])
+                state.switch_player()  #Alternamos o jogador para refletir a mudança de estado
 
             #Se chegarmos a um no com jogadas por testar
             if len(node.untried_moves) > 0 and state.get_game_result() is None:
                 #Escolhemos uma jogada à sorte que ainda nao testamos
                 move = random.choice(node.untried_moves)
                 state.apply_move(move[0], move[1])
+                state.switch_player()  #Alternamos o jogador para refletir a mudança de estado
                 #Criamos um filho novo na árvore
                 node = node.add_child(state.clone(), move)
             
@@ -84,12 +92,13 @@ class MCTS:
                     break
                 move = random.choice(possible_moves)
                 state.apply_move(move[0], move[1])
+                state.switch_player()  #Alternamos o jogador para refletir a mudança de estado
             
             #No fim da simulação vemos que ganhou
             result = state.get_game_result()
 
             while node is not None:
-                node.update(result, self.ai_player)
+                node.update(result)
                 node = node.parent
         
         #A jogada que escolhemos é do filho que foi visitado mais vezes

@@ -1,4 +1,5 @@
 import MCTS 
+import csv
 
 class PopOutGame:
     ROWS = 6
@@ -198,14 +199,62 @@ class PopOutGame:
             if(op=="1" or op=="2"):
                 return op
 
+    def generate_dataset(self, num_games=50, filename='dataset_popout.csv'):
+        """
+        Duas IAs a jogar uma contra a outra e guarda as 
+        decisões num ficheiro CSV
+        """
+        print(f"A iniciar a geração de {num_games} jogos de treino...")
+        
+        # 1. Abrir o ficheiro CSV em modo de escrita ('w')
+        with open(filename, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Escrevemos o cabeçalho (a primeira linha do Excel/CSV)
+            writer.writerow(['Board_State', 'Best_Move'])
 
+            # 2. O Ciclo dos Jogos
+            for i in range(num_games):
+                print(f"A simular jogo {i + 1} de {num_games}...")
+                
+                # Cria um tabuleiro novo e limpo para esta partida
+                sim_game = PopOutGame()
+                
+                # Cria os dois "cérebros" com as tuas 3000 iterações
+                ia_X = MCTS.MCTS(ai_player='X', iterations=3000)
+                ia_O = MCTS.MCTS(ai_player='O', iterations=3000)
+
+                # 3. O Ciclo de Turnos (jogar até o jogo acabar)
+                while sim_game.get_game_result() is None:
+                    
+
+                    if(sim_game.current_player == 'X'):
+                        best_move = ia_X.search(sim_game) 
+                    else:
+                        best_move = ia_O.search(sim_game)
+                    
+                    
+                    estado_tabuleiro = str(sim_game.board)
+                    jogada = f"{best_move[0]} {best_move[1]}"
+                    
+                    writer.writerow([estado_tabuleiro, jogada])
+                    
+                    # TODO Passo D: Aplicar a jogada no tabuleiro.
+                    # Chama o sim_game.apply_move(...) usando o best_move que a IA escolheu.
+                    sim_game.apply_move(best_move[0], best_move[1])
+                    
+                    # TODO Passo E: Trocar de jogador para o próximo turno.
+                    # Chama o sim_game.switch_player()
+                    sim_game.switch_player()
+        
+        print(f"\n✅ Geração concluída! Ficheiro '{filename}' criado com sucesso.")
 
     def play(self):
         modo_jogo = self.print_menu_inicial()
 
         self.print_instructions()
 
-        ia = MCTS.MCTS(ai_player = "O", iterations = 1000)
+        ia = MCTS.MCTS(ai_player = "O", iterations = 3000)
 
         while True:
             
@@ -284,4 +333,5 @@ class PopOutGame:
 
 if __name__ == "__main__":
     game = PopOutGame()
-    game.play()
+    #game.play() #Temporário
+    game.generate_dataset(num_games=3)
