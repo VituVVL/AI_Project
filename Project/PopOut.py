@@ -1,5 +1,7 @@
 import MCTS 
 import csv
+import os
+import time
 
 class PopOutGame:
     ROWS = 6
@@ -199,19 +201,28 @@ class PopOutGame:
             if(op=="1" or op=="2"):
                 return op
 
-    def generate_dataset(self, num_games=50, filename='dataset_popout.csv'):
+    def generate_dataset(self, num_games=50, iterations=3000):
+
+        """Cronómetro temporario para teste de tempos de execução após mudanças"""
+        tempo_inicio = time.time()
+
         """
         Duas IAs a jogar uma contra a outra e guarda as 
         decisões num ficheiro CSV
         """
-        print(f"A iniciar a geração de {num_games} jogos de treino...")
+        print(f"A iniciar a geração de {num_games} jogos (iterações: {iterations})")
         
+        filename = f"dataset_popout_{iterations}.csv"
+
+        ficheiro_existe = os.path.isfile(filename)
+
         # 1. Abrir o ficheiro CSV em modo de escrita ('w')
-        with open(filename, mode='w', newline='') as file:
+        with open(filename, mode='a', newline='') as file:
             writer = csv.writer(file)
             
-            # Escrevemos o cabeçalho (a primeira linha do Excel/CSV)
-            writer.writerow(['Board_State', 'Best_Move'])
+            # Só escrevemos o cabeçalho (a primeira linha do Excel/CSV) se o ficheiro acabou de ser criado
+            if not ficheiro_existe:
+                writer.writerow(['Board_State', 'Best_Move'])
 
             # 2. O Ciclo dos Jogos
             for i in range(num_games):
@@ -221,8 +232,8 @@ class PopOutGame:
                 sim_game = PopOutGame()
                 
                 # Cria os dois "cérebros" com as tuas 3000 iterações
-                ia_X = MCTS.MCTS(ai_player='X', iterations=3000)
-                ia_O = MCTS.MCTS(ai_player='O', iterations=3000)
+                ia_X = MCTS.MCTS(ai_player='X', iterations=iterations)
+                ia_O = MCTS.MCTS(ai_player='O', iterations=iterations)
 
                 # 3. O Ciclo de Turnos (jogar até o jogo acabar)
                 while sim_game.get_game_result() is None:
@@ -239,15 +250,29 @@ class PopOutGame:
                     
                     writer.writerow([estado_tabuleiro, jogada])
                     
-                    # TODO Passo D: Aplicar a jogada no tabuleiro.
-                    # Chama o sim_game.apply_move(...) usando o best_move que a IA escolheu.
+                    # Aplicar a jogada no tabuleiro
                     sim_game.apply_move(best_move[0], best_move[1])
+
+                    # Avisar as duas ia's que a jogada aconteceu
+                    # Assim avançam a árvore e não começam do zero
+                    ia_X.update_root(best_move)
+                    ia_O.update_root(best_move)
+                    #ia_X.root = None
+                    #ia_O.root = None
                     
-                    # TODO Passo E: Trocar de jogador para o próximo turno.
-                    # Chama o sim_game.switch_player()
+                    # Trocar de jogador para o próximo turno.
                     sim_game.switch_player()
-        
+
+        tempo_fim = time.time()
+        tempo_total = tempo_fim - tempo_inicio
+
         print(f"\n✅ Geração concluída! Ficheiro '{filename}' criado com sucesso.")
+        print(f"Tempo Total de execução {tempo_total:.2f}")
+
+        """
+        Versao que nao aproveita árvore e cria sempre uma nova : 16.49 segundos
+        Versao que utiliza árvore ja criada : 
+        """
 
     def play(self):
         modo_jogo = self.print_menu_inicial()
@@ -334,4 +359,4 @@ class PopOutGame:
 if __name__ == "__main__":
     game = PopOutGame()
     #game.play() #Temporário
-    game.generate_dataset(num_games=3)
+    game.generate_dataset(num_games=1)

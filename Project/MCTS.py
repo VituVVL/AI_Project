@@ -54,19 +54,33 @@ class Node:
             self.wins += 0.5
 
 class MCTS:
-    def __init__(self, ai_player, iterations=10000):
+    def __init__(self, ai_player, iterations=3000):
         self.ai_player = ai_player      #Define se a IA está a jogar com 'X' ou 'O'
         self.iterations = iterations    #Quantos "jogos à sorte" vamos simular por jogada
+        self.root = None
+
+    def update_root(self, move):
+        """Avisa a IA da ultima jogada feita para nao criar sempre uma nova todas as vezes"""
+        if self.root is not None:
+            #Procura nos filhos da raiz atual a jogada que acabou de acontecer 
+            for child in self.root.children:
+                if child.move == move:
+                    self.root = child
+                    self.root.parent = None #Corta a ligação para trás dessa
+                    return
+        self.root = None
 
     def search(self, initial_state):
         #Devolve a melhor jogada possível após realizar milhares de simulações
 
         #Nó raiz estado do tabuleiro exatamente como ele está agora
-        root = Node(state=initial_state.clone())
+        #So criamos se não tivermos um
+        if self.root is None:
+            self.root = Node(state=initial_state.clone())
 
         #O ciclo de simulações(limitado pelo iteration 1000)
         for _ in range(self.iterations):
-            node = root
+            node = self.root
             state = initial_state.clone()   #Usamos um clone novo para podermos usar nas simulações
 
             #Descemos pela árvore já explorada usando a fórmula UCT
@@ -102,5 +116,5 @@ class MCTS:
                 node = node.parent
         
         #A jogada que escolhemos é do filho que foi visitado mais vezes
-        best_child = max(root.children, key=lambda c: c.visits)
+        best_child = max(self.root.children, key=lambda c: c.visits)
         return best_child.move
