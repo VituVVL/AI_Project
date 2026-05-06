@@ -266,7 +266,7 @@ class PopOutGame:
         tempo_fim = time.time()
         tempo_total = tempo_fim - tempo_inicio
 
-        print(f"\n✅ Geração concluída! Ficheiro '{filename}' criado com sucesso.")
+        print(f"\n✅ Geração concluída! Ficheiro '{filename}' criado/atualizado com sucesso.")
         print(f"Tempo Total de execução {tempo_total:.2f}")
 
         """
@@ -342,13 +342,22 @@ class PopOutGame:
                         else:
                             print("Invalid pop. You can only pop your own bottom piece.")
                         continue
-
+                    # Atualiza a árvore da IA com a jogada real feita pelo humano
+                    if modo_jogo == "2":
+                        ia.update_root((move_type, col))
                     # Sai do loop interno quando a jogada é válida
                     break
                 else:
                     jogada_ia = ia.search(self)
-                    print(f"A IA jogou {jogada_ia[0]} na coluna {jogada_ia[1]+1}")
-                    self.apply_move(jogada_ia[0], jogada_ia[1])
+                    
+                    success = self.apply_move(jogada_ia[0], jogada_ia[1])
+
+                    if not success:
+                        raise RuntimeError(f"A IA tentou uma jogada inválida: {jogada_ia}")
+                    # Atualiza a árvore da IA com a própria jogada feita
+                    ia.update_root(jogada_ia)
+
+                    print(f"A IA jogou {jogada_ia[0]} na coluna {jogada_ia[1] + 1}")
                     #jogada_ia[0] = 'drop' ou 'pop'
                     #jogada_ia[1] = nr da coluna
                     break

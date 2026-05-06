@@ -75,7 +75,9 @@ class MCTS:
 
         #Nó raiz estado do tabuleiro exatamente como ele está agora
         #So criamos se não tivermos um
-        if self.root is None:
+        if (self.root is None
+            or self.root.state.board != initial_state.board
+            or self.root.state.current_player != initial_state.current_player):
             self.root = Node(state=initial_state.clone())
 
         #O ciclo de simulações(limitado pelo iteration 1000)
