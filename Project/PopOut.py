@@ -457,8 +457,45 @@ class PopOutGame:
 
             self.switch_player()
 
+"Temporário para testes após mudanças e para colocar no relatório depois"
+import random
+def test_get_winners_equivalence(num_games=10000, max_moves=1000):
+    """
+    Testa se a nova função get_winners() dá o mesmo resultado
+    que a função antiga check_winner_for().
+    """
+
+    for game_number in range(num_games):
+        game = PopOutGame()
+
+        for move_number in range(max_moves):
+            old_x = game.check_winner_for('X')
+            old_o = game.check_winner_for('O')
+
+            winners = game.get_winners()
+            new_x = 'X' in winners
+            new_o = 'O' in winners
+
+            assert old_x == new_x, f"Erro para X no jogo {game_number}, jogada {move_number}"
+            assert old_o == new_o, f"Erro para O no jogo {game_number}, jogada {move_number}"
+
+            if game.get_game_result() is not None:
+                break
+
+            legal_moves = game.get_legal_moves()
+
+            if not legal_moves:
+                break
+
+            move = random.choice(legal_moves)
+
+            game.apply_move(move[0], move[1])
+            game.switch_player()
+
+    print("Teste concluído: get_winners() está equivalente à função antiga.")
 
 if __name__ == "__main__":
+    #test_get_winners_equivalence(num_games=1000, max_moves=100)
     game = PopOutGame()
     #game.play() #Temporário
     game.generate_dataset(num_games=1)
