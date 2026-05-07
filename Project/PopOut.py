@@ -121,6 +121,7 @@ class PopOutGame:
     def board_full(self):
         return all(self.board[0][col] != self.EMPTY for col in range(self.COLS))
 
+    # Função antiga feita pelo Sergio, mantida para comparação de tempos de execução
     def check_winner_for(self, player):
         """Verifica se o jogador informado tem 4 em linha."""
         # Horizontal
@@ -148,9 +149,82 @@ class PopOutGame:
                     return True
 
         return False
+    def get_winners(self):
+        """
+        Verifica vencedores varrendo o tabuleiro uma única vez.
+        Retorna um conjunto, por exemplo:
+        set()        -> ninguém venceu
+        {'X'}        -> X venceu
+        {'O'}        -> O venceu
+        {'X', 'O'}   -> ambos venceram
+        """
+        winners = set()
+        b = self.board
+        empty = self.EMPTY
 
-    def get_game_result(self):
-        """Verifica o estado do jogo e aplica as regras do PopOut."""
+        # Horizontal
+        for row in range(self.ROWS):
+            for col in range(self.COLS - 3):
+                p = b[row][col]
+                if (
+                    p != empty
+                    and b[row][col + 1] == p
+                    and b[row][col + 2] == p
+                    and b[row][col + 3] == p
+                ):
+                    winners.add(p)
+                    if len(winners) == 2:
+                        return winners
+
+        # Vertical
+        for row in range(self.ROWS - 3):
+            for col in range(self.COLS):
+                p = b[row][col]
+                if (
+                    p != empty
+                    and b[row + 1][col] == p
+                    and b[row + 2][col] == p
+                    and b[row + 3][col] == p
+                ):
+                    winners.add(p)
+                    if len(winners) == 2:
+                        return winners
+
+        # Diagonal principal (\)
+        for row in range(self.ROWS - 3):
+            for col in range(self.COLS - 3):
+                p = b[row][col]
+                if (
+                    p != empty
+                    and b[row + 1][col + 1] == p
+                    and b[row + 2][col + 2] == p
+                    and b[row + 3][col + 3] == p
+                ):
+                    winners.add(p)
+                    if len(winners) == 2:
+                        return winners
+
+        # Diagonal secundária (/)
+        for row in range(3, self.ROWS):
+            for col in range(self.COLS - 3):
+                p = b[row][col]
+                if (
+                    p != empty
+                    and b[row - 1][col + 1] == p
+                    and b[row - 2][col + 2] == p
+                    and b[row - 3][col + 3] == p
+                ):
+                    winners.add(p)
+                    if len(winners) == 2:
+                        return winners
+
+        return winners
+
+        """
+        Função antiga feita pelo Sergio
+
+        def get_game_result(self):
+        ""Verifica o estado do jogo e aplica as regras do PopOut.""
         x_wins = self.check_winner_for('X')
         o_wins = self.check_winner_for('O')
 
@@ -164,6 +238,25 @@ class PopOutGame:
         elif x_wins:
             return 'X'
         elif o_wins:
+            return 'O'
+        """
+        
+    def get_game_result(self):
+        """Verifica o estado do jogo e aplica as regras do PopOut."""
+
+        winners = self.get_winners()
+
+        # Se um pop cria 4 em linha para ambos, o jogador que fez o pop ganha e o outro é ignorado.
+        if 'X' in winners and 'O' in winners:
+            if self.last_move_type == 'pop':
+                return self.last_player
+            else:
+                return 'DRAW'
+
+        elif 'X' in winners:
+            return 'X'
+
+        elif 'O' in winners:
             return 'O'
         
         # Se o mesmo estado se repete 3 vezes, o jogo é declarado empate.
