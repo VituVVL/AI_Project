@@ -359,7 +359,7 @@ class PopOutGame:
         tempo_fim = time.time()
         tempo_total = tempo_fim - tempo_inicio
 
-        print(f"\n✅ Geração concluída! Ficheiro '{filename}' criado/atualizado com sucesso.")
+        print(f"\nGeração concluída! Ficheiro '{filename}' criado/atualizado com sucesso.")
         print(f"Tempo Total de execução {tempo_total:.2f}")
 
         """
@@ -497,5 +497,5 @@ def test_get_winners_equivalence(num_games=10000, max_moves=1000):
 if __name__ == "__main__":
     #test_get_winners_equivalence(num_games=1000, max_moves=100)
     game = PopOutGame()
-    #game.play() #Temporário
-    game.generate_dataset(num_games=1)
+    game.play() #Temporário
+    #game.generate_dataset(num_games=1)
