@@ -2,6 +2,7 @@ import MCTS
 import csv
 import os
 import time
+import tst
 
 class PopOutGame:
     ROWS = 6
@@ -494,8 +495,68 @@ def test_get_winners_equivalence(num_games=10000, max_moves=1000):
 
     print("Teste concluído: get_winners() está equivalente à função antiga.")
 
+def idvsmc(num_games=5):
+     
+    X, y = tst.carregar_dados("dataset_popout_3000.csv")
+    arvore = tst.construir_arvore(X, y, list(range(42)))
+    print("Concluído\n")
+    
+    print(f"ID3 (X) vs MCTS 1000 iter (O)")
+    vitorias_id3 = 0
+    vitorias_mcts = 0
+    empates = 0
+
+    tempo_inicio = time.time()
+
+    for i in range(num_games):
+        game = PopOutGame()
+        
+        # O Jogador X é o nosso Cérebro Estático (Árvore)
+        ia_X = tst.ID3Jogador(arvore_treinada=arvore)
+        
+        # O Jogador O é o MCTS a calcular na hora (1000 iterações para o teste não demorar muito)
+        ia_O = MCTS.MCTS(ai_player='O', iterations=1000)
+
+        while game.get_game_result() is None:
+            if game.current_player == 'X':
+                move = ia_X.search(game)
+            else:
+                move = ia_O.search(game)
+
+            # Aplicar a jogada no tabuleiro
+            success = game.apply_move(move[0], move[1])
+            
+            if not success:
+                print(f"⚠️ A IA {game.current_player} tentou uma jogada inválida: {move}")
+                break
+
+            # O ID3 não tem "memória" que precise de ser atualizada, mas o MCTS precisa!
+            # Por isso, avisamos o MCTS da jogada que acabou de acontecer.
+            ia_O.update_root(move)
+
+            game.switch_player()
+
+        resultado = game.get_game_result()
+        if resultado == 'X':
+            vitorias_id3 += 1
+            print(f"Jogo {i+1}: Vitória do ID3 (Árvore)")
+        elif resultado == 'O':
+            vitorias_mcts += 1
+            print(f"Jogo {i+1}: Vitória do MCTS")
+        else:
+            empates += 1
+            print(f"Jogo {i+1}: Empate")
+
+    tempo_total = time.time() - tempo_inicio
+    
+    print(f"\nRESULTADOS({num_games} Jogos | Tempo: {tempo_total:.1f}s) ---")
+    print(f"ID3 (X): {vitorias_id3} vitórias")
+    print(f"MCTS (O): {vitorias_mcts} vitórias")
+    print(f"Empates: {empates}")
+
 if __name__ == "__main__":
     #test_get_winners_equivalence(num_games=1000, max_moves=100)
-    game = PopOutGame()
-    game.play() #Temporário
+    #game = PopOutGame()
+    #game.play() #Temporário
     #game.generate_dataset(num_games=1)
+    idvsmc(num_games=5)
