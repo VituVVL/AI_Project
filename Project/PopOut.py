@@ -2,7 +2,7 @@ import MCTS
 import csv
 import os
 import time
-import tst
+import Project.ID3 as ID3
 
 class PopOutGame:
     ROWS = 6
@@ -497,8 +497,8 @@ def test_get_winners_equivalence(num_games=10000, max_moves=1000):
 
 def idvsmc(num_games=5):
      
-    X, y = tst.carregar_dados("dataset_popout_3000.csv")
-    arvore = tst.construir_arvore(X, y, list(range(42)))
+    X, y = ID3.carregar_dados("dataset_popout_3000.csv")
+    arvore = ID3.construir_arvore(X, y, list(range(42)))
     print("Concluído\n")
     
     print(f"ID3 (X) vs MCTS 1000 iter (O)")
@@ -512,7 +512,7 @@ def idvsmc(num_games=5):
         game = PopOutGame()
         
         # O Jogador X é o nosso Cérebro Estático (Árvore)
-        ia_X = tst.ID3Jogador(arvore_treinada=arvore)
+        ia_X = ID3.ID3Jogador(arvore_treinada=arvore)
         
         # O Jogador O é o MCTS a calcular na hora (1000 iterações para o teste não demorar muito)
         ia_O = MCTS.MCTS(ai_player='O', iterations=1000)
