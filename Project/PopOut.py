@@ -122,34 +122,6 @@ class PopOutGame:
     def board_full(self):
         return all(self.board[0][col] != self.EMPTY for col in range(self.COLS))
 
-    # Função antiga feita pelo Sergio, mantida para comparação de tempos de execução
-    def check_winner_for(self, player):
-        """Verifica se o jogador informado tem 4 em linha."""
-        # Horizontal
-        for row in range(self.ROWS):
-            for col in range(self.COLS - 3):
-                if all(self.board[row][col + i] == player for i in range(4)):
-                    return True
-
-        # Vertical
-        for row in range(self.ROWS - 3):
-            for col in range(self.COLS):
-                if all(self.board[row + i][col] == player for i in range(4)):
-                    return True
-
-        # Diagonal principal (\)
-        for row in range(self.ROWS - 3):
-            for col in range(self.COLS - 3):
-                if all(self.board[row + i][col + i] == player for i in range(4)):
-                    return True
-
-        # Diagonal secundária (/)
-        for row in range(3, self.ROWS):
-            for col in range(self.COLS - 3):
-                if all(self.board[row - i][col + i] == player for i in range(4)):
-                    return True
-
-        return False
     def get_winners(self):
         """
         Verifica vencedores varrendo o tabuleiro uma única vez.
@@ -294,6 +266,22 @@ class PopOutGame:
             op = input("> ").strip()
             if(op=="1" or op=="2"):
                 return op
+            else:
+                print("Opção inválida. Escolha 1 ou 2.")
+    
+    def print_menu_ia(self):
+        print()
+        print("Escolha a IA:")
+        print("1- MCTS 100 iterações")
+        print("2- MCTS 3000 iterações")
+        print("3- MCTS 5000 iterações")
+        print("4- ID3 treinado com dataset_popout_3000.csv")
+
+        while True:
+            op = input("> ").strip()
+            if op in ["1", "2", "3", "4"]:
+                return op
+            print("Opção inválida. Escolha 1, 2, 3 ou 4.")
 
     def generate_dataset(self, num_games=50, iterations=3000):
 
@@ -371,9 +359,38 @@ class PopOutGame:
     def play(self):
         modo_jogo = self.print_menu_inicial()
 
-        self.print_instructions()
+        ia = None
+        ia_tipo = None
+        ia_nome = None
 
-        ia = MCTS.MCTS(ai_player = "O", iterations = 3000)
+        if modo_jogo == "2":
+            ia_tipo = self.print_menu_ia()
+
+            if ia_tipo == "1":
+                ia = MCTS.MCTS(ai_player="O", iterations=100)
+                ia_nome = "MCTS 100"
+
+            elif ia_tipo == "2":
+                ia = MCTS.MCTS(ai_player="O", iterations=3000)
+                ia_nome = "MCTS 3000"
+
+            elif ia_tipo == "3":
+                ia = MCTS.MCTS(ai_player="O", iterations=5000)
+                ia_nome = "MCTS 5000"
+
+            elif ia_tipo == "4":
+                print()
+                print("A carregar dataset e treinar árvore ID3...")
+
+                X, y = ID3.carregar_dados("dataset_popout_3000.csv")
+                arvore = ID3.construir_arvore(X, y, list(range(42)))
+
+                ia = ID3.ID3Jogador(arvore_treinada=arvore)
+                ia_nome = "ID3 treinado com dataset_popout_3000.csv"
+
+                print("ID3 carregado com sucesso.")
+
+        self.print_instructions()
 
         while True:
             
@@ -437,7 +454,7 @@ class PopOutGame:
                             print("Invalid pop. You can only pop your own bottom piece.")
                         continue
                     # Atualiza a árvore da IA com a jogada real feita pelo humano
-                    if modo_jogo == "2":
+                    if modo_jogo == "2" and ia_tipo in ["1", "2", "3"]:
                         ia.update_root((move_type, col))
                     # Sai do loop interno quando a jogada é válida
                     break
@@ -449,7 +466,8 @@ class PopOutGame:
                     if not success:
                         raise RuntimeError(f"A IA tentou uma jogada inválida: {jogada_ia}")
                     # Atualiza a árvore da IA com a própria jogada feita
-                    ia.update_root(jogada_ia)
+                    if ia_tipo in ["1", "2", "3"]:
+                        ia.update_root(jogada_ia)
 
                     print(f"A IA jogou {jogada_ia[0]} na coluna {jogada_ia[1] + 1}")
                     #jogada_ia[0] = 'drop' ou 'pop'
@@ -457,43 +475,6 @@ class PopOutGame:
                     break
 
             self.switch_player()
-
-"Temporário para testes após mudanças e para colocar no relatório depois"
-import random
-def test_get_winners_equivalence(num_games=10000, max_moves=1000):
-    """
-    Testa se a nova função get_winners() dá o mesmo resultado
-    que a função antiga check_winner_for().
-    """
-
-    for game_number in range(num_games):
-        game = PopOutGame()
-
-        for move_number in range(max_moves):
-            old_x = game.check_winner_for('X')
-            old_o = game.check_winner_for('O')
-
-            winners = game.get_winners()
-            new_x = 'X' in winners
-            new_o = 'O' in winners
-
-            assert old_x == new_x, f"Erro para X no jogo {game_number}, jogada {move_number}"
-            assert old_o == new_o, f"Erro para O no jogo {game_number}, jogada {move_number}"
-
-            if game.get_game_result() is not None:
-                break
-
-            legal_moves = game.get_legal_moves()
-
-            if not legal_moves:
-                break
-
-            move = random.choice(legal_moves)
-
-            game.apply_move(move[0], move[1])
-            game.switch_player()
-
-    print("Teste concluído: get_winners() está equivalente à função antiga.")
 
 def idvsmc(num_games=5):
      
@@ -556,8 +537,8 @@ def idvsmc(num_games=5):
 
 if __name__ == "__main__":
     #test_get_winners_equivalence(num_games=1000, max_moves=100)
-    #game = PopOutGame()
-    #game.play() #Temporário
-    #game.generate_dataset(num_games=200)
-    #game.generate_dataset(num_games=300, iterations=5000)
-    idvsmc(num_games=5)
+    game = PopOutGame()
+    game.play() #Temporário
+    #game.generate_dataset(num_games=3)
+    #game.generate_dataset(num_games=3, iterations=5000)
+    #idvsmc(num_games=5)
