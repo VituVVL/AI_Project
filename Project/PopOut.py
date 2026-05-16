@@ -2,7 +2,7 @@ import MCTS
 import csv
 import os
 import time
-import Project.ID3 as ID3
+import ID3 as ID3
 
 class PopOutGame:
     ROWS = 6
@@ -558,5 +558,6 @@ if __name__ == "__main__":
     #test_get_winners_equivalence(num_games=1000, max_moves=100)
     #game = PopOutGame()
     #game.play() #Temporário
-    #game.generate_dataset(num_games=1)
+    #game.generate_dataset(num_games=200)
+    #game.generate_dataset(num_games=300, iterations=5000)
     idvsmc(num_games=5)
