@@ -1,7 +1,11 @@
 import csv
 import ast
 import math
+import os
 from collections import Counter
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "Data")
 
 
 def carregar_dados(filename):
@@ -159,8 +163,9 @@ class ID3Jogador:
 if __name__ == "__main__":
     import time
     # 1. Carregar os Dados
-    X_dados, y_jogadas = carregar_dados("dataset_popout_3000.csv")
-    
+    dataset_3000 = os.path.join(DATA_DIR, "dataset_popout_3000.csv")
+    X_dados, y_jogadas = carregar_dados(dataset_3000)
+
     # O nosso tabuleiro tem 42 posições (0 a 41)
     atributos = list(range(42))
     

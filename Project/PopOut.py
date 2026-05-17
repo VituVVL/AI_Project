@@ -4,6 +4,8 @@ import os
 import time
 import ID3 as ID3
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "Data")
 class PopOutGame:
     ROWS = 6
     COLS = 7
@@ -294,7 +296,9 @@ class PopOutGame:
         """
         print(f"A iniciar a geração de {num_games} jogos (iterações: {iterations})")
         
-        filename = f"dataset_popout_{iterations}.csv"
+        os.makedirs(DATA_DIR, exist_ok=True)
+
+        filename = os.path.join(DATA_DIR, f"dataset_popout_{iterations}.csv")
 
         ficheiro_existe = os.path.isfile(filename)
 
@@ -382,7 +386,8 @@ class PopOutGame:
                 print()
                 print("A carregar dataset e treinar árvore ID3...")
 
-                X, y = ID3.carregar_dados("dataset_popout_3000.csv")
+                dataset_3000 = os.path.join(DATA_DIR, "dataset_popout_3000.csv")
+                X, y = ID3.carregar_dados(dataset_3000)
                 arvore = ID3.construir_arvore(X, y, list(range(42)))
 
                 ia = ID3.ID3Jogador(arvore_treinada=arvore)
@@ -477,8 +482,9 @@ class PopOutGame:
             self.switch_player()
 
 def idvsmc(num_games=5):
-     
-    X, y = ID3.carregar_dados("dataset_popout_3000.csv")
+
+    dataset_3000 = os.path.join(DATA_DIR, "dataset_popout_3000.csv") 
+    X, y = ID3.carregar_dados(dataset_3000)
     arvore = ID3.construir_arvore(X, y, list(range(42)))
     print("Concluído\n")
     
@@ -538,7 +544,7 @@ def idvsmc(num_games=5):
 if __name__ == "__main__":
     #test_get_winners_equivalence(num_games=1000, max_moves=100)
     game = PopOutGame()
-    game.play() #Temporário
-    #game.generate_dataset(num_games=3)
+    #game.play() #Temporário
+    game.generate_dataset(num_games=3)
     #game.generate_dataset(num_games=3, iterations=5000)
     #idvsmc(num_games=5)
