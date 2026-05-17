@@ -458,6 +458,7 @@ class PopOutGame:
                         else:
                             print("Invalid pop. You can only pop your own bottom piece.")
                         continue
+
                     # Atualiza a árvore da IA com a jogada real feita pelo humano
                     if modo_jogo == "2" and ia_tipo in ["1", "2", "3"]:
                         ia.update_root((move_type, col))
@@ -469,7 +470,14 @@ class PopOutGame:
                     success = self.apply_move(jogada_ia[0], jogada_ia[1])
 
                     if not success:
-                        raise RuntimeError(f"A IA tentou uma jogada inválida: {jogada_ia}")
+                        if ia_tipo == "4":
+                            import random
+                            print(f"A IA tentou uma jogada inválida ({jogada_ia[0]} {jogada_ia[1]+1}). A forçar jogada legal!")
+                            jogada_ia = random.choice(self.get_legal_moves())
+                            self.apply_move(jogada_ia[0], jogada_ia[1])
+                        else:
+                            raise RuntimeError(f"O MCTS tentou uma jogada inválida")
+                        
                     # Atualiza a árvore da IA com a própria jogada feita
                     if ia_tipo in ["1", "2", "3"]:
                         ia.update_root(jogada_ia)
@@ -544,7 +552,11 @@ def idvsmc(num_games=5):
 if __name__ == "__main__":
     #test_get_winners_equivalence(num_games=1000, max_moves=100)
     game = PopOutGame()
+    try:
+        game.play()
+    except KeyboardInterrupt:
+        print("\nJogo interrompido pelo utilizador.")
     #game.play() #Temporário
-    game.generate_dataset(num_games=3)
+    #game.generate_dataset(num_games=3)
     #game.generate_dataset(num_games=3, iterations=5000)
     #idvsmc(num_games=5)
